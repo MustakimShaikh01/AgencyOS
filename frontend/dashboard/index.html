@@ -49,11 +49,21 @@
                 <a href="/contact.html" class="nav-link">Network</a>
                 <div style="width: 1px; height: 16px; background: var(--border-subtle); margin: 0 10px;"></div>
                 <button class="nav-link" style="border:none; background:none; cursor:pointer;"
-                    onclick="engine.toggleLights()">💡 Lights</button>
+                    onclick="loadCorporateFeed()">🌍 Feed</button>
+                <button class="nav-link" style="border:none; background:none; cursor:pointer;"
+                    onclick="loadHumanReviewCenter()">✅ Reviews</button>
+                <div style="width: 1px; height: 16px; background: var(--border-subtle); margin: 0 10px;"></div>
+                <button class="nav-link" style="border:none; background:none; cursor:pointer;"
+                    onclick="loadSecurityVault()">🔐 Security</button>
                 <div style="width: 1px; height: 16px; background: var(--border-subtle); margin: 0 10px;"></div>
                 <button class="nav-link" style="border:none; background:none; cursor:pointer;"
                     onclick="loadCompanyDrive()">Data Drive</button>
-                <button class="primary-btn" style="padding: 8px 20px; font-size: 0.75rem; margin-left: 10px;"
+                <button class="primary-btn" id="login-status-btn"
+                    style="padding: 8px 15px; font-size: 0.7rem; margin-left: 10px; background: #333;"
+                    onclick="toggleCompanyLogin()">
+                    Login
+                </button>
+                <button class="primary-btn" style="padding: 8px 20px; font-size: 0.75rem; margin-left: 5px;"
                     onclick="document.getElementById('campaign-modal').classList.add('active')">
                     Deploy AI
                 </button>
@@ -71,6 +81,10 @@
                             <div class="kpi-card">
                                 <span class="val" id="kpi-campaigns">0</span>
                                 <span class="lab">Active Drives</span>
+                            </div>
+                            <div class="kpi-card">
+                                <span class="val" id="kpi-knowledge">0</span>
+                                <span class="lab">Knowledge Pts</span>
                             </div>
                             <div class="kpi-card">
                                 <span class="val" id="kpi-spend">$0.00</span>
@@ -137,6 +151,17 @@
                     <input type="text" id="cp_name" placeholder="Quantum Nexus Expansion" required>
                 </div>
                 <div class="form-input-group">
+                    <label>Industry Vertical (Real-Life Problem)</label>
+                    <select id="cp_industry"
+                        style="width: 100%; background: #000; border: 1px solid var(--border-subtle); color: #fff; padding: 12px; border-radius: 6px;">
+                        <option value="ecommerce">E-Commerce Growth</option>
+                        <option value="saas_startup">SaaS User Acquisition</option>
+                        <option value="personal_brand">Personal Branding</option>
+                        <option value="real_estate">Real Estate Lead Gen</option>
+                        <option value="custom">Custom Brief...</option>
+                    </select>
+                </div>
+                <div class="form-input-group">
                     <label>Autonomous Persona Guidelines</label>
                     <textarea id="cp_guidelines" rows="4"
                         placeholder="Aggressive market penetration, sleek aesthetic consistency..."></textarea>
@@ -154,12 +179,62 @@
     <div id="drive-modal" class="modal-shield">
         <div class="modal-body" style="max-width: 900px;">
             <div class="modal-header">
-                <h2>Corporate Intelligence Drive</h2>
+                <h2 id="drive-modal-title">Corporate Intelligence Drive</h2>
                 <button class="close-btn"
                     onclick="document.getElementById('drive-modal').classList.remove('active')">&times;</button>
             </div>
-            <div id="drive-contents" style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+            <div id="drive-contents" style="max-height: 70vh; overflow-y: auto; padding-right: 10px;">
                 <!-- Drive data -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-shield">
+        <div class="modal-body" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Company Identity</h2>
+                <button class="close-btn"
+                    onclick="document.getElementById('login-modal').classList.remove('active')">&times;</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">Enter your company name to
+                    authenticate your agency workspace.</p>
+                <div class="form-input-group">
+                    <label>Company Name</label>
+                    <input type="text" id="company_name_input" placeholder="e.g. NexaCorp AI"
+                        style="width:100%; padding:10px; background:#000; border:1px solid #333; color:#fff;">
+                </div>
+                <button class="primary-btn" style="width: 100%; margin-top: 10px;"
+                    onclick="saveCompanyIdentity()">Authorize Access</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="modal-shield">
+        <div class="modal-body" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h2>Human Review Center</h2>
+                <button class="close-btn"
+                    onclick="document.getElementById('review-modal').classList.remove('active')">&times;</button>
+            </div>
+            <div id="review-contents" style="max-height: 75vh; overflow-y: auto; padding: 20px;">
+                <!-- Review data -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Modal -->
+    <div id="security-modal" class="modal-shield">
+        <div class="modal-body" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>🔐 Enterprise Security Vault</h2>
+                <button class="close-btn"
+                    onclick="document.getElementById('security-modal').classList.remove('active')">&times;</button>
+            </div>
+            <div id="security-contents" style="padding: 20px;">
+                <!-- Security data -->
             </div>
         </div>
     </div>
@@ -168,9 +243,9 @@
         style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
     </div>
 
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/websocket.js"></script>
-    <script src="/static/js/game.js"></script>
+    <script src="/static/js/api.js?v=2.0"></script>
+    <script src="/static/js/websocket.js?v=2.0"></script>
+    <script src="/static/js/engine.js?v=2.0"></script>
 </body>
 
 </html>

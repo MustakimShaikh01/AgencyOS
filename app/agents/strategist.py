@@ -33,6 +33,7 @@ Follow this exact JSON format in your response. Do not include any other text:
       "title": "...",
       "description": "...",
       "assigned_to": "agent_name",
+      "platform": "linkedin|meta|whatsapp|internal",
       "budget": 0.0,
       "priority": "high|medium|low"
     }}

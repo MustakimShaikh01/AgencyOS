@@ -73,6 +73,7 @@ class Orchestrator:
                     title=spec.get("title", "Unnamed Task"),
                     description=spec.get("description", ""),
                     assigned_agent=spec.get("assigned_to", "content_writer"),
+                    platform=spec.get("platform", "internal"),
                     budget=float(spec.get("budget", 0.0)),
                     status="pending"
                 )
@@ -93,8 +94,54 @@ class Orchestrator:
                 await self._handle_task_lifecycle(task, campaign.brand_guidelines, session)
                 
             logger.info(f"Campaign {campaign.name} workflow completed!")
-            from app.logs.action_logger import action_logger
-            await action_logger.log("CAMPAIGN_COMPLETED", "orchestrator", "campaign", campaign.id, {"status": "completed"})
+            
+            # Step 3: Chief Intelligence Officer (CIO) Performance Review
+            from app.core.knowledge_store import knowledge_store
+            
+            # Gather all completed work for the CIO
+            tasks_data = []
+            for t in tasks_queue:
+                tasks_data.append({
+                    "title": t.title,
+                    "agent": t.assigned_agent,
+                    "output": t.output_content,
+                    "revisions": t.revision_count
+                })
+
+            await action_logger.log("EVALUATING", "cio", "campaign", campaign.id, {"title": "Full Campaign Review", "message": "Analyzing fleet performance and synergy..."})
+            
+            cio_response = await self.execute_agent(
+                agent_name="cio",
+                task_data={"campaign_name": campaign.name, "tasks_completed": tasks_data},
+                context={},
+                session=session
+            )
+            
+            # Store Campaign Summary in Knowledge Store
+            knowledge_store.add_entry(
+                entry_type="campaign_summary",
+                actor="cio",
+                content=cio_response.get("summary", ""),
+                metadata={
+                    "campaign_id": campaign.id,
+                    "campaign_name": campaign.name,
+                    "promotions": cio_response.get("promotions", []),
+                    "real_world_advice": cio_response.get("real_world_advice", "")
+                }
+            )
+
+            # Apply Promotions/Rewards based on CIO judgement
+            for promo in cio_response.get("promotions", []):
+                target = promo.get("agent")
+                if target:
+                    await self._reward_agent(session, target, "cio_promotion_bonus")
+
+            await action_logger.log("CAMPAIGN_COMPLETED", "orchestrator", "campaign", campaign.id, {
+                "status": "completed", 
+                "summary": cio_response.get("summary"),
+                "advice": cio_response.get("real_world_advice")
+            })
+            
             campaign.status = "completed"
             await session.commit()
 
@@ -167,6 +214,16 @@ class Orchestrator:
                     task.output_content = json.dumps(draft_response)
                     
         task.status = "approved"
+        
+        # Store approved content in corporate brain
+        from app.core.knowledge_store import knowledge_store
+        knowledge_store.add_entry(
+            entry_type="approved_content",
+            actor=creator_name,
+            content=task.output_content,
+            metadata={"task_id": task.id, "title": task.title}
+        )
+
         await self._reward_agent(session, creator_name, "first_pass_approval")
         await session.commit()
 

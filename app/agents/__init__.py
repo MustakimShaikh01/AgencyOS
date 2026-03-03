@@ -7,6 +7,8 @@ from .finance_controller import FinanceControllerAgent
 from .seo_agent import SEOAgent
 from .ads_manager import AdsManagerAgent
 from .social_manager import SocialManagerAgent
+from .chief_intelligence_officer import ChiefIntelligenceOfficer
+from .researcher import ResearcherAgent
 
 # Registry of all available agents
 AGENT_REGISTRY = {
@@ -18,6 +20,8 @@ AGENT_REGISTRY = {
     "seo_agent": SEOAgent(),
     "ads_manager": AdsManagerAgent(),
     "social_manager": SocialManagerAgent(),
+    "cio": ChiefIntelligenceOfficer(),
+    "researcher": ResearcherAgent(),
 }
 
 __all__ = [
@@ -30,5 +34,7 @@ __all__ = [
     "SEOAgent",
     "AdsManagerAgent",
     "SocialManagerAgent",
+    "ChiefIntelligenceOfficer",
+    "ResearcherAgent",
     "AGENT_REGISTRY"
 ]

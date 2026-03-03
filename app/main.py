@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 from fastapi.staticfiles import StaticFiles
 
-from app.api import campaigns, agents, tasks, analytics, websocket
+from app.api import campaigns, agents, tasks, analytics, websocket, brain, portal, social
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -41,6 +41,9 @@ app.include_router(campaigns.router, prefix="/api/v1")
 app.include_router(agents.router, prefix="/api/v1")
 app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(analytics.router, prefix="/api/v1")
+app.include_router(brain.router, prefix="/api/v1")
+app.include_router(portal.router, prefix="/api/v1")
+app.include_router(social.router, prefix="/api/v1")
 app.include_router(websocket.router)
 
 # Serve Frontend static files targeting the root
@@ -54,5 +57,10 @@ async def dummy_profile():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": settings.VERSION}
+
+@app.get("/dashboard")
+async def dashboard_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("frontend/dashboard/index.html")
 
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

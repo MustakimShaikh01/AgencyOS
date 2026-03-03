@@ -67,28 +67,67 @@ Instructions:
         return f"{system_prompt}\n\n{agent_prompt}"
 
     async def parse_response(self, raw: str) -> Dict[str, Any]:
-        """Safely parse LLM output into JSON."""
+        """Safely parse LLM output into JSON, with higher resilience to extra text or multiple blocks."""
+        # Pre-clean: Remove common LLM artifacts and handle control characters
+        # Some LLMs output raw control characters like newlines inside strings
+        cleaned = raw.strip()
+        
+        # Robust parsing strategy
         try:
-            # First try direct json load
-            return json.loads(raw)
+            # 1. Direct try
+            return json.loads(cleaned)
         except json.JSONDecodeError:
+            pass
+
+        # 2. Try finding JSON blocks via Markdown delimiters
+        json_matches = re.finditer(r'```(?:json)?\s*(.*?)\s*```', cleaned, re.DOTALL)
+        for match in json_matches:
             try:
-                # Try finding JSON block using regex if LLM added markdown formatting
-                json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', raw, re.DOTALL)
-                if json_match:
-                    return json.loads(json_match.group(1))
-                
-                # Last resort: try finding first { and last }
-                start = raw.find('{')
-                end = raw.rfind('}') + 1
-                if start != -1 and end != 0:
-                    return json.loads(raw[start:end])
-                
-                raise ValueError("Could not find valid JSON in LLM response.")
-            except (json.JSONDecodeError, ValueError) as e:
-                logger.error(f"Failed to parse LLM response for {self.name}: {e}")
-                logger.error(f"RAW OUTPUT THAT FAILED TO PARSE:\n{raw}\n---END RAW OUTPUT---")
-                raise ValueError(f"Agent {self.name} returned invalid format.")
+                return json.loads(match.group(1).strip())
+            except json.JSONDecodeError:
+                continue
+
+        # 3. Last resort: Progressive search for a valid JSON object
+        # We look for the first '{' and try to find the matching '}'
+        start_indices = [m.start() for m in re.finditer(r'\{', cleaned)]
+        for start in start_indices:
+            # Try from the end of the string backwards
+            for end in range(len(cleaned), start, -1):
+                if cleaned[end-1] == '}':
+                    try:
+                        candidate = cleaned[start:end]
+                        
+                        # Surgical cleaning: escape only newlines that are INSIDE quotes
+                        result = []
+                        in_string = False
+                        escaped = False
+                        for char in candidate:
+                            if char == '"' and not escaped:
+                                in_string = not in_string
+                            
+                            if char == '\n' and in_string:
+                                result.append('\\n')
+                            elif char == '\r' and in_string:
+                                result.append('\\n')
+                            else:
+                                result.append(char)
+                            
+                            if char == '\\' and not escaped:
+                                escaped = True
+                            else:
+                                escaped = False
+                        
+                        candidate_clean = "".join(result)
+                        # Clean remaining non-printable control characters
+                        candidate_clean = re.sub(r'[\x00-\x1f\x7f-\x9f]', lambda m: json.dumps(m.group())[1:-1] if m.group() not in ['\n', '\r', '\t'] else m.group(), candidate_clean)
+                        
+                        return json.loads(candidate_clean)
+                    except json.JSONDecodeError:
+                        continue
+        
+        logger.error(f"Failed to parse LLM response for {self.name}")
+        logger.error(f"RAW OUTPUT THAT FAILED TO PARSE:\n{raw}\n---END RAW OUTPUT---")
+        raise ValueError(f"Agent {self.name} returned invalid format. Please ensure the prompt is strict.")
 
     @abstractmethod
     async def validate_output(self, output: Dict[str, Any]) -> bool:

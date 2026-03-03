@@ -69,6 +69,47 @@ class ApiService {
     async getAgentPerformance() {
         return this.getJSON('/analytics/agent-performance');
     }
+
+    // Brain (New)
+    async getBrainStats() {
+        return this.getJSON('/brain/stats');
+    }
+
+    async getBrainEntries(type = null) {
+        let url = '/brain/entries';
+        if (type) url += `?type=${type}`;
+        return this.getJSON(url);
+    }
+
+    // Portal (New)
+    async publishPost(postData) {
+        return this.postJSON('/portal/publish', postData);
+    }
+
+    async getPortalFeed() {
+        return this.getJSON('/portal/feed');
+    }
+
+    // Human Review & Social (New)
+    async getCompletedTasks() {
+        return this.getJSON('/tasks/completed');
+    }
+
+    async rateTask(taskId, rating, feedback) {
+        return this.postJSON(`/tasks/${taskId}/rate`, { rating, feedback });
+    }
+
+    async publishTask(taskId) {
+        return this.postJSON(`/tasks/${taskId}/publish`, {});
+    }
+
+    async getSocialAccounts() {
+        return this.getJSON('/social/accounts');
+    }
+
+    async verifySocial2FA(platform) {
+        return this.postJSON(`/social/verify/${platform}`, {});
+    }
 }
 
 const api = new ApiService();

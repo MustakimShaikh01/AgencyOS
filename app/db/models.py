@@ -43,6 +43,10 @@ class Task(Base):
     approval_score = Column(Integer, default=0)
     revision_count = Column(Integer, default=0)
     output_content = Column(Text)
+    platform = Column(String, nullable=True) # linkedin, meta, whatsapp
+    human_rating = Column(Integer, nullable=True) 
+    human_feedback = Column(Text, nullable=True)
+    published_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -62,6 +66,15 @@ class Decision(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     
     task = relationship("Task", back_populates="decisions")
+
+class SocialAccount(Base):
+    __tablename__ = "social_accounts"
+    id = Column(Integer, primary_key=True, index=True)
+    platform = Column(String, unique=True, index=True) # linkedin, meta, whatsapp
+    account_name = Column(String)
+    status = Column(String, default="disconnected") # connected, pending_2fa, error
+    two_fa_enabled = Column(Integer, default=0) # 0 or 1
+    last_verified = Column(DateTime, default=datetime.utcnow)
 
 class ModelUsage(Base):
     __tablename__ = "model_usage"

@@ -15,7 +15,7 @@ async def create_campaign(campaign_in: CampaignCreate, db: AsyncSession = Depend
     """Creates a new campaign draft."""
     campaign = Campaign(
         name=campaign_in.name,
-        brand_guidelines=campaign_in.brand_guidelines,
+        brand_guidelines=f"[{campaign_in.industry.upper()}] {campaign_in.brand_guidelines}",
         workflow_type=campaign_in.workflow_type,
         total_budget=campaign_in.total_budget
     )

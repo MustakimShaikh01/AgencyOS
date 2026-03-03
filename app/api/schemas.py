@@ -6,6 +6,7 @@ from datetime import datetime
 class CampaignCreate(BaseModel):
     name: str = Field(..., example="Summer Sale Promotion")
     brand_guidelines: str = Field(..., example="Fun, energetic, youthful tone.")
+    industry: Optional[str] = Field(default="custom")
     workflow_type: str = Field(default="content_campaign")
     total_budget: float = Field(default=500.0)
 
@@ -31,10 +32,18 @@ class TaskResponse(BaseModel):
     risk_score: int
     revision_count: int
     output_content: Optional[str] = None
+    platform: Optional[str] = None
+    human_rating: Optional[int] = None
+    human_feedback: Optional[str] = None
+    published_at: Optional[datetime] = None
     created_at: datetime
     
     class Config:
         from_attributes = True
+
+class TaskRateRequest(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    feedback: Optional[str] = None
 
 # Agent Schemas
 class AgentResponse(BaseModel):
@@ -57,6 +66,17 @@ class DecisionResponse(BaseModel):
     reasoning: Optional[str]
     timestamp: datetime
     
+    class Config:
+        from_attributes = True
+
+class SocialAccountResponse(BaseModel):
+    id: int
+    platform: str
+    account_name: Optional[str]
+    status: str
+    two_fa_enabled: int
+    last_verified: datetime
+
     class Config:
         from_attributes = True
 
