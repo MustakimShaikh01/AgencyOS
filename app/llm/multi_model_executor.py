@@ -37,6 +37,7 @@ class MultiModelExecutor:
                 start_time = time.time()
                 
                 logger.info(f"Executing prompt for {agent_name} using {current_model}...")
+                logger.debug(f"PROMPT START (500 chars):\n{prompt[:500]}...")
                 raw_response = await asyncio.to_thread(
                     model_loader.generate, 
                     current_model, 

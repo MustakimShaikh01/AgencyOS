@@ -17,8 +17,8 @@ MODEL_MAP = {
         "filename": "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
     },
     "qwen": {
-        "repo": "TheBloke/Qwen-1_8B-Chat-GGUF",
-        "filename": "qwen-1_8b-chat.Q4_K_M.gguf"
+        "repo": "Qwen/Qwen1.5-1.8B-Chat-GGUF",
+        "filename": "qwen1_5-1_8b-chat-q4_k_m.gguf"
     },
     "mistral": {
         "repo": "TheBloke/Mistral-7B-Instruct-v0.2-GGUF",

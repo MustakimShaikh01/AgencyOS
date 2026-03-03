@@ -23,7 +23,15 @@ class ActionLogger:
             "resource_id": resource_id,
             "details": details
         }
-        logger.info(f"ACTION: {json.dumps(log_entry)}")
+        json_payload = json.dumps(log_entry)
+        logger.info(f"ACTION: {json_payload}")
+        
+        # Dashboard Broadcast
+        try:
+            from app.api.websocket import manager
+            await manager.broadcast(json_payload)
+        except Exception as e:
+            logger.error(f"WS Broadcast error: {e}")
         
         # Database Audit Log
         try:

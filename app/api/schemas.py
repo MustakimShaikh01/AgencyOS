@@ -25,10 +25,12 @@ class CampaignResponse(BaseModel):
 class TaskResponse(BaseModel):
     id: int
     title: str
+    description: Optional[str] = None
     assigned_agent: Optional[str]
     status: str
     risk_score: int
     revision_count: int
+    output_content: Optional[str] = None
     created_at: datetime
     
     class Config:
@@ -62,6 +64,8 @@ class ModelUsageResponse(BaseModel):
     model_name: str
     total_tokens: int
     total_calls: int
+    
+    model_config = {"protected_namespaces": ()}
     
 class AgentPerformanceResponse(BaseModel):
     agent_name: str

@@ -32,6 +32,25 @@ class Orchestrator:
             await session.commit()
             
             # Step 1: Strategist Planning (Always First)
+            from app.logs.action_logger import action_logger
+            from app.llm.rag_engine import rag_engine
+            import asyncio
+            
+            await action_logger.log("MEETING", "strategist", "campaign", campaign.id, {"title": campaign.name, "message": f"Team gather up! We have a new campaign: {campaign.name}"})
+            await asyncio.sleep(2)
+            await action_logger.log("MEETING", "content_writer", "campaign", campaign.id, {"title": campaign.name, "message": "I'm looking at the brief now. Any specific market angles we should take?"})
+            await asyncio.sleep(3)
+            
+            # Perform Local RAG Lookup for Market Trends
+            trends = rag_engine.retrieve_trends(f"{campaign.name} {campaign.brand_guidelines}")
+            trend_snippet = trends.split('\n')[0][:75] + "..." if trends else "Stick to the classics."
+            
+            await action_logger.log("MEETING", "strategist", "campaign", campaign.id, {"title": campaign.name, "message": f"Our RAG Database says: '{trend_snippet}'. Let's frame around that."})
+            await asyncio.sleep(3)
+            await action_logger.log("MEETING", "finance_controller", "campaign", campaign.id, {"title": campaign.name, "message": f"Agreed. Just keep the allocations under our ${campaign.total_budget} budget!"})
+            await asyncio.sleep(2)
+            await action_logger.log("MEETING", "strategist", "campaign", campaign.id, {"title": campaign.name, "message": "Give me a second. Im drafting the sub-tasks payload..."})
+            
             strategist = AGENT_REGISTRY.get("strategist")
             if not strategist:
                 raise RuntimeError("Strategist agent not found in registry.")
@@ -39,7 +58,7 @@ class Orchestrator:
             planner_response = await self.execute_agent(
                 agent_name="strategist",
                 task_data={"campaign_brief": campaign.name, "budget": campaign.total_budget},
-                context={"brand_guidelines": campaign.brand_guidelines},
+                context={"brand_guidelines": campaign.brand_guidelines, "market_trends": trends},
                 session=session
             )
             
@@ -68,7 +87,7 @@ class Orchestrator:
                 logger.info(f"\n--- Processing Task: {task.title} (Agent: {task.assigned_agent}) ---")
                 
                 from app.logs.action_logger import action_logger
-                await action_logger.log("TASK_STARTED", task.assigned_agent, "task", task.id, {"title": task.title, "budget": task.budget})
+                await action_logger.log("TASK_STARTED", task.assigned_agent, "task", task.id, {"title": task.title, "budget": task.budget, "message": f"I'll prioritize writing: {task.title}"})
                 
                 # Execute Creator
                 await self._handle_task_lifecycle(task, campaign.brand_guidelines, session)
@@ -105,6 +124,9 @@ class Orchestrator:
             if evaluator_name == creator_name:
                 continue # Skip self evaluation loop here since it ran during draft
                 
+            from app.logs.action_logger import action_logger
+            await action_logger.log("EVALUATING", evaluator_name, "task", task.id, {"title": f"Reviewing {creator_name}'s work", "message": "Let me review this code and check if it meets our bar..."})
+            
             eval_response = await self.execute_agent(
                 evaluator_name, 
                 {"content": task.output_content, "draft_content": task.output_content, "total_budget": 1000, "spent_budget": 0, "task_cost": task.budget, "tokens_used": 0}, 
@@ -153,8 +175,22 @@ class Orchestrator:
         agent = AGENT_REGISTRY[agent_name]
         logger.debug(f">> {agent.role} is executing...")
         
+        # Broadcast "THINKING" state specifically for the game UI
+        try:
+            from app.api.websocket import manager
+            import json
+            await manager.broadcast(json.dumps({
+                "type": "THINKING",
+                "actor": agent_name
+            }))
+        except Exception as e:
+            pass
+            
+        # Build the full prompt using the agent's logic (including system prompts)
+        prompt = await agent.build_prompt(task_data, context)
+        
         # Send to LLM
-        response = await multi_model_executor.execute(agent_name, agent.prompt_template.format(**{**context, **task_data}), task_id)
+        response = await multi_model_executor.execute(agent_name, prompt, task_id)
         
         return response
 

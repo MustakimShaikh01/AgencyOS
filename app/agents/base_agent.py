@@ -87,6 +87,7 @@ Instructions:
                 raise ValueError("Could not find valid JSON in LLM response.")
             except (json.JSONDecodeError, ValueError) as e:
                 logger.error(f"Failed to parse LLM response for {self.name}: {e}")
+                logger.error(f"RAW OUTPUT THAT FAILED TO PARSE:\n{raw}\n---END RAW OUTPUT---")
                 raise ValueError(f"Agent {self.name} returned invalid format.")
 
     @abstractmethod

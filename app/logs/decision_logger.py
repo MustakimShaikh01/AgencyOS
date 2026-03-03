@@ -28,6 +28,20 @@ class DecisionLogger:
         # Simple string-dump for terminal output parity
         logger.info(f"[{agent}] -> {decision_type} on Task#{task_id} (Score: {score}) | Reason: {reasoning}")
         
+        # Broadcast decision as game chat for characters
+        try:
+            from app.api.websocket import manager
+            chat_payload = json.dumps({
+                "type": "DECISION_CHAT",
+                "actor": agent,
+                "decision": decision_type,
+                "score": score,
+                "message": reasoning[:150] + ("..." if len(reasoning) > 150 else "")
+            })
+            await manager.broadcast(chat_payload)
+        except Exception as e:
+            logger.error(f"WS Broadcast error: {e}")
+            
         # Full Audit
         try:
             async with AsyncSessionLocal() as session:

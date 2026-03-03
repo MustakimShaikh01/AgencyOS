@@ -17,25 +17,30 @@ Campaign Brief:
 Brand Guidelines:
 {brand_guidelines}
 
+Latest Market Trends (RAG Database):
+{market_trends}
+
 Budget: ${budget}
 
 Break this campaign into actionable sub-tasks.
 Assign each task to one of: content_writer, seo_agent, ads_manager, social_manager
 
-Return JSON:
-{
-  "analysis_summary": "brief campaign analysis",
+Follow this exact JSON format in your response. Do not include any other text:
+{{
+  "analysis_summary": "...",
   "sub_tasks": [
-    {
-      "title": "task name",
-      "description": "what needs to be done",
+    {{
+      "title": "...",
+      "description": "...",
       "assigned_to": "agent_name",
       "budget": 0.0,
       "priority": "high|medium|low"
-    }
+    }}
   ],
   "confidence_score": 0.0
-}"""
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate strategist outputs."""
