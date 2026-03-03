@@ -20,15 +20,17 @@ Objectives:
 - Suggest internal link placements
 - Ensure appropriate keyword density
 
-Return JSON:
-{
+Return YOUR RESPONSE as JSON matching this format:
+{{
   "primary_keyword": "keyword",
   "secondary_keywords": ["kw1", "kw2"],
   "meta_title": "Optimized Title (under 60 chars)",
   "meta_description": "Optimized description (under 160 chars)",
   "content_suggestions": ["suggestion 1", "suggestion 2"],
   "seo_score": 0
-}"""
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate SEO agent outputs."""

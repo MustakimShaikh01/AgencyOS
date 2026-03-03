@@ -20,19 +20,21 @@ Objectives:
 - Specify exact audience targeting
 - Define budget allocation logic
 
-Return JSON:
-{
-  "targeting_strategy": "audience targeting text",
+Return YOUR RESPONSE as JSON matching this format:
+{{
+  "targeting_strategy": "...",
   "ad_variations": [
-    {
-      "headline": "catchy headline",
-      "primary_text": "main ad copy",
-      "call_to_action": "Buy Now, Learn More, etc."
-    }
+    {{
+      "headline": "...",
+      "primary_text": "...",
+      "call_to_action": "..."
+    }}
   ],
-  "budget_allocation_advice": "where to spend",
+  "budget_allocation_advice": "...",
   "expected_ctr_confidence": 0.0
-}"""
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate an Ads Manager output."""

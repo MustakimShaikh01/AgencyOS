@@ -21,15 +21,17 @@ Analyze:
 - Is there a budget overrun risk?
 - Is cost efficiency acceptable?
 
-Return JSON:
-{
+Return YOUR RESPONSE as JSON matching this format:
+{{
   "budget_status": "within_limit|approaching_limit|over_limit",
   "budget_remaining": 0.0,
   "overrun_percentage": 0.0,
   "cost_efficiency_score": 0,
   "approval_required": false,
   "recommendation": "proceed|pause|escalate"
-}"""
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate finance controller outputs."""

@@ -19,16 +19,18 @@ Objectives:
 - Create engaging hooks and hashtags
 - Propose an optimal posting schedule
 
-Return JSON:
-{
-  "platform_adaptations": {
-    "twitter": "tweet text with #hashtags",
-    "linkedin": "professional post with line breaks",
-    "instagram": "visual-first caption with many #hashtags"
-  },
+Return YOUR RESPONSE as JSON matching this format:
+{{
+  "platform_adaptations": {{
+    "twitter": "...",
+    "linkedin": "...",
+    "instagram": "..."
+  }},
   "recommended_hashtags": ["list", "of", "tags"],
-  "posting_schedule_recommendation": "When to post for max engagement"
-}"""
+  "posting_schedule_recommendation": "..."
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate a Social Manager output."""

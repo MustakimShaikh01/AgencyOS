@@ -21,14 +21,16 @@ Detect any of the following:
 - Brand reputation risk
 - Regulatory compliance issues
 
-Return JSON:
-{
+Return YOUR RESPONSE as JSON matching this format:
+{{
   "risk_score": 0,
   "risk_flags": ["specific issue 1", "specific issue 2"],
   "risk_categories": ["legal", "ethical", "brand"],
   "escalation_required": false,
-  "recommended_changes": "what to fix"
-}"""
+  "recommended_changes": "..."
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate risk agent outputs."""

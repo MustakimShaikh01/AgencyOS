@@ -21,14 +21,16 @@ Content Objectives:
 - Professional tone
 - Clear call-to-action
 
-Return JSON:
-{
+Return YOUR RESPONSE as JSON matching this format:
+{{
   "analysis_summary": "...",
   "draft_content": "full content here",
-  "self_review_notes": "what you think could be improved",
+  "self_review_notes": "...",
   "seo_keywords_used": ["keyword1", "keyword2"],
   "confidence_score": 0.0
-}"""
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate content writer outputs."""

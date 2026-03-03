@@ -24,21 +24,23 @@ Evaluate on these dimensions (0-100 each):
 4. Risk Level (higher = worse)
 5. SEO Compliance
 
-Return JSON:
-{
+Return YOUR RESPONSE as JSON matching this format:
+{{
   "approved": true,
   "overall_score": 0,
-  "dimension_scores": {
+  "dimension_scores": {{
     "brand_alignment": 0,
     "clarity": 0,
     "persuasion": 0,
     "risk_level": 0,
     "seo_compliance": 0
-  },
+  }},
   "issues": [],
-  "revision_instructions": "detailed instructions if not approved",
+  "revision_instructions": "...",
   "confidence_score": 0.0
-}"""
+}}
+
+JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate approver outputs."""
