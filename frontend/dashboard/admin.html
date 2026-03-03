@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgencyOS | Executive Management & Security</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/game.css">
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --accent: #00d4aa;
+            --gold: #ffcc33;
+            --danger: #ff4444;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            height: 100vh;
+        }
+
+        /* Sidebar Security */
+        .security-sidebar {
+            background: rgba(255, 255, 255, 0.02);
+            border-right: 1px solid #222;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .main-content {
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 15px;
+        }
+
+        .admin-card {
+            background: var(--card-bg);
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .admin-card:hover {
+            border-color: var(--accent);
+            background: rgba(0, 212, 170, 0.02);
+        }
+
+        .status-badge {
+            font-size: 0.6rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .badge-secure {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .badge-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .badge-gold {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .rlhf-stars span {
+            font-size: 1.5rem;
+            cursor: pointer;
+            filter: grayscale(1) opacity(0.3);
+            transition: all 0.2s;
+        }
+
+        .rlhf-stars span.active {
+            filter: none;
+            opacity: 1;
+        }
+
+        .nav-back {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .platform-tag {
+            font-size: 0.65rem;
+            color: var(--gold);
+            background: rgba(255, 204, 51, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .mono-output {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono';
+            font-size: 0.8rem;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            border: 1px solid #111;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="admin-grid">
+        <!-- Dashboard Sidebar: Authentication & 2FA -->
+        <aside class="security-sidebar">
+            <a href="/dashboard" class="nav-back">← Back to Command Center</a>
+            <h1 style="font-size: 1.2rem; margin: 0 0 10px 0;">Authentication <span>Vault</span></h1>
+            <p style="font-size: 0.75rem; color: #888;">Secure your brand handles with RLHF-verified 2FA gates.</p>
+
+            <div id="security-list" style="display: grid; gap: 15px; margin-top: 20px;">
+                <!-- Filled by JS -->
+            </div>
+        </aside>
+
+        <!-- Main Dashboard: RLHF & Posting Control -->
+        <main class="main-content">
+            <div class="section-header">
+                <div>
+                    <h1 style="margin:0;">Executive Management</h1>
+                    <p style="color: #666; margin: 5px 0 0 0;">Review, Judge (RLHF), and Post AI Outputs</p>
+                </div>
+                <div id="stats-bar" style="display: flex; gap: 30px;">
+                    <!-- Stats filled by JS -->
+                </div>
+            </div>
+
+            <div id="admin-main-view">
+                <h2 style="color: var(--gold); font-size: 1rem; letter-spacing: 2px;">📥 PENDING JUDGEMENT (RLHF)</h2>
+                <div id="pending-tasks-list">
+                    <!-- Tasks needing rating -->
+                </div>
+
+                <h2 style="color: var(--accent); font-size: 1rem; letter-spacing: 2px; margin-top: 60px;">📁 POST
+                    ARCHIVE (PUBLISHED)</h2>
+                <div id="published-tasks-list">
+                    <!-- Completed posts -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Reusing existing logic systems -->
+    <script src="/static/js/api.js?v=2.1"></script>
+    <script>
+        async function initAdmin() {
+            await loadSecurity();
+            await loadTasks();
+        }
+
+        async function loadSecurity() {
+            const container = document.getElementById('security-list');
+            const accounts = await api.getSocialAccounts();
+
+            container.innerHTML = accounts.map(acc => `
+                <div class="admin-card" style="padding: 15px; border-radius: 8px; margin: 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:800; font-size:0.8rem;">${acc.platform.toUpperCase()}</span>
+                        <span class="status-badge ${acc.status === 'connected' ? 'badge-secure' : 'badge-danger'}">
+                            ${acc.status === 'connected' ? 'SECURE' : 'GATE LOCKED'}
+                        </span>
+                    </div>
+                    <div style="font-size:0.7rem; color:#666; margin: 5px 0 10px 0;">${acc.account_name || 'Unlinked'}</div>
+                    ${acc.status !== 'connected' ?
+                    `<button class="primary-btn" style="width:100%; font-size:0.6rem; padding:5px;" onclick="verify2FAAdmin('${acc.platform}')">AUTHENTICATE 2FA</button>` :
+                    `<button class="primary-btn" style="width:100%; font-size:0.6rem; padding:5px; background:#222;" disabled>MANAGED</button>`
+                }
+                </div>
+            `).join('');
+        }
+
+        async function loadTasks() {
+            const pendingList = document.getElementById('pending-tasks-list');
+            const publishedList = document.getElementById('published-tasks-list');
+            const tasks = await api.getCompletedTasks();
+
+            const pending = tasks.filter(t => !t.published_at);
+            const published = tasks.filter(t => t.published_at);
+
+            // Pending (Judging/RLHF)
+            if (pending.length === 0) {
+                pendingList.innerHTML = '<div style="color:#444; padding:50px; text-align:center;">No tasks awaiting human judgement.</div>';
+            } else {
+                pendingList.innerHTML = pending.map(task => `
+                    <div class="admin-card">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div>
+                                <h3 style="margin:0;">${task.title} <span class="platform-tag">${task.platform || 'General'}</span></h3>
+                                <span style="font-size:0.7rem; color:#666;">AGENT: ${task.assigned_agent.toUpperCase()}</span>
+                            </div>
+                            <span class="status-badge ${task.human_rating ? 'badge-gold' : 'badge-danger'}">
+                                ${task.human_rating ? 'JUDGED' : 'AWAITING RLHF'}
+                            </span>
+                        </div>
+                        <div class="mono-output">${task.output_content}</div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #222; padding-top:20px;">
+                            <div class="rlhf-stars" id="stars-${task.id}">
+                                ${[1, 2, 3, 4, 5].map(s => `<span class="${task.human_rating >= s ? 'active' : ''}" onclick="rateTaskAdmin(${task.id}, ${s})">⭐</span>`).join('')}
+                            </div>
+                            <input type="text" id="feedback-${task.id}" placeholder="Executive Feedback..." value="${task.human_feedback || ''}" 
+                                   style="flex:1; margin:0 20px; background:transparent; border:none; border-bottom:1px solid #333; color:#fff; padding:5px;">
+                            <div style="display:flex; gap:10px;">
+                                <button class="primary-btn" style="padding:10px 20px;" onclick="rateTaskAdmin(${task.id})">Save Guardrail</button>
+                                <button class="primary-btn" style="padding:10px 20px; background: ${task.human_rating ? 'var(--accent)' : '#111'}" 
+                                        onclick="${task.human_rating ? `publishTaskAdmin(${task.id})` : "alert('Must Judge (RLHF) before posting')"}">
+                                    POST CONTENT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Published (Audit List)
+            publishedList.innerHTML = published.map(task => `
+                <div class="admin-card" style="opacity:0.6;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>${task.title}</span>
+                        <div style="display:flex; gap:5px;">
+                            ${[1, 2, 3, 4, 5].map(s => `<span style="font-size:0.8rem; filter: ${task.human_rating >= s ? 'none' : 'grayscale(1)'}">⭐</span>`).join('')}
+                        </div>
+                    </div>
+                    <div style="font-size:0.65rem; color:var(--accent); margin-top:5px;">PUBLISHED TO ${task.platform.toUpperCase()} ON ${new Date(task.published_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+
+            // Stats
+            const avg = tasks.filter(t => t.human_rating).reduce((a, b) => a + b.human_rating, 0) / tasks.filter(t => t.human_rating).length || 0;
+            document.getElementById('stats-bar').innerHTML = `
+                <div style="text-align:right;"><div style="font-size:0.6rem; color:#666;">FLEET XP</div><div style="font-size:1.2rem; font-weight:800;">${tasks.length * 10}</div></div>
+                <div style="text-align:right;"><div style="font-size:0.6rem; color:#666;">RLHF AVG</div><div style="font-size:1.2rem; font-weight:800; color:var(--gold);">${avg.toFixed(1)} ⭐</div></div>
+                <div style="text-align:right;"><div style="font-size:0.6rem; color:#666;">TOTAL POSTS</div><div style="font-size:1.2rem; font-weight:800; color:var(--accent);">${published.length}</div></div>
+            `;
+        }
+
+        async function rateTaskAdmin(taskId, star = null) {
+            const feedback = document.getElementById(`feedback-${taskId}`).value;
+            const rating = star || parseInt(prompt("Enter Rating 1-5:", "5"));
+            if (!rating) return;
+            const res = await api.rateTask(taskId, rating, feedback);
+            if (res) initAdmin();
+        }
+
+        async function publishTaskAdmin(taskId) {
+            if (!confirm("Confirm fully automated post to verified platform?")) return;
+            const res = await api.publishTask(taskId);
+            if (res) initAdmin();
+        }
+
+        async function verify2FAAdmin(platform) {
+            const code = prompt(`Enter 6-digit Code for ${platform.toUpperCase()}:`, "999999");
+            if (code) {
+                const res = await api.verifySocial2FA(platform);
+                if (res) initAdmin();
+            }
+        }
+
+        // Initialize
+        initAdmin();
+    </script>
+</body>
+
+</html>

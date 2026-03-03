@@ -63,4 +63,9 @@ async def dashboard_page():
     from fastapi.responses import FileResponse
     return FileResponse("frontend/dashboard/index.html")
 
+@app.get("/admin")
+async def admin_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("frontend/dashboard/admin.html")
+
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
