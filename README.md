@@ -8,6 +8,7 @@ AgencyOS simulates a fully autonomous AI-powered marketing agency. Specialized A
 
 ## ✨ Features
 
+
 - 🤖 **9 Specialized AI Agents** — Strategist, Content Writer, Approver, Risk Officer, Finance Controller + more
 - 🧠 **Local LLMs** — TinyLlama, Qwen, Mistral via llama.cpp (no OpenAI costs)
 - ⚖️ **Authority & Governance Engine** — 5-level approval hierarchy
