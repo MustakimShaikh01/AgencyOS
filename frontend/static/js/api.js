@@ -13,6 +13,7 @@ class ApiService {
             return await res.json();
         } catch (error) {
             console.error(`GET ${endpoint} failed:`, error);
+            if (typeof showToast === 'function') showToast(`Access Denied: ${error.message}`, 'error');
             return null;
         }
     }
@@ -28,6 +29,7 @@ class ApiService {
             return await res.json();
         } catch (error) {
             console.error(`POST ${endpoint} failed:`, error);
+            if (typeof showToast === 'function') showToast(`Execution Failed: ${error.message}`, 'error');
             return null;
         }
     }

@@ -1,150 +1,171 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgencyOS - True 3D AI Company</title>
+    <title>AgencyOS Dashboard | Standard Workspace</title>
+
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
 
-    <!-- Three.js and GSAP for powerful 3D WebGL experiences without heavy assets -->
+    <!-- Heavy Hitters -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-    <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/game.css">
 </head>
 
 <body>
-    <nav class="top-nav">
-        <div class="brand">
-            <div class="logo-orb"></div>
-            <h1>AgencyOS <span>Meta-Workspace</span></h1>
+
+    <!-- Professional Loader -->
+    <div id="global-loader" class="loader-shield">
+        <div class="spinner-grid">
+            <div style="animation-delay: 0s"></div>
+            <div style="animation-delay: 0.1s"></div>
+            <div style="animation-delay: 0.2s"></div>
+            <div style="animation-delay: 0.1s"></div>
+            <div style="animation-delay: 0.2s"></div>
+            <div style="animation-delay: 0.3s"></div>
+            <div style="animation-delay: 0.2s"></div>
+            <div style="animation-delay: 0.3s"></div>
+            <div style="animation-delay: 0.4s"></div>
         </div>
-        <div class="nav-controls">
-            <button class="nav-btn" id="theme-toggle">🌗 Mode</button>
-            <button class="nav-btn" onclick="document.getElementById('aboutModal').classList.add('active')">📖 How it
-                Works</button>
-            <button class="nav-btn" style="color: var(--screen); border-color: var(--screen);"
-                onclick="loadCompanyDrive()">📂 Company Drive</button>
-            <button class="btn btn-primary"
-                onclick="document.getElementById('createCampaignModal').classList.add('active')">
-                ✨ Start AI Company Work
-            </button>
-        </div>
-    </nav>
+        <div class="loader-text"
+            style="color: #fff; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; font-size: 0.7rem;">
+            Syncing Infrastructure</div>
+    </div>
 
-    <div class="dashboard-layout">
+    <div class="app-container">
+        <header class="primary-header">
+            <div class="brand-section">
+                <h1>Agency<span>OS</span></h1>
+            </div>
 
-        <!-- Left HUD -->
-        <aside class="hud-sidebar">
-            <div class="hud-header">
-                <h2>Company Operations</h2>
-                <div class="status-indicator">
-                    <span id="ws-status-orb" class="orb active"></span>
-                    <span id="ws-status-text">LLM Engine Synced</span>
+            <nav class="nav-hub">
+                <a href="/" class="nav-link">Hub</a>
+                <a href="/about.html" class="nav-link">Intel</a>
+                <a href="/contact.html" class="nav-link">Network</a>
+                <div style="width: 1px; height: 16px; background: var(--border-subtle); margin: 0 10px;"></div>
+                <button class="nav-link" style="border:none; background:none; cursor:pointer;"
+                    onclick="engine.toggleLights()">💡 Lights</button>
+                <div style="width: 1px; height: 16px; background: var(--border-subtle); margin: 0 10px;"></div>
+                <button class="nav-link" style="border:none; background:none; cursor:pointer;"
+                    onclick="loadCompanyDrive()">Data Drive</button>
+                <button class="primary-btn" style="padding: 8px 20px; font-size: 0.75rem; margin-left: 10px;"
+                    onclick="document.getElementById('campaign-modal').classList.add('active')">
+                    Deploy AI
+                </button>
+            </nav>
+        </header>
+
+        <main class="dashboard-main">
+            <!-- Left HUD: Control and Analytics -->
+            <aside class="hud-control-panel">
+                <div class="hud-scroll-area">
+
+                    <div class="hud-section">
+                        <div class="section-label">Operations Health</div>
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <span class="val" id="kpi-campaigns">0</span>
+                                <span class="lab">Active Drives</span>
+                            </div>
+                            <div class="kpi-card">
+                                <span class="val" id="kpi-spend">$0.00</span>
+                                <span class="lab">Resource Burn</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hud-section">
+                        <div class="section-label">System Meta-States</div>
+
+                        <div class="stat-item">
+                            <div class="stat-header">
+                                <span>Core Logic Pulse</span>
+                                <span id="logic-percent" class="pulse-yellow">92%</span>
+                            </div>
+                            <div class="meter-outer">
+                                <div class="meter-inner" style="width: 92%"></div>
+                            </div>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-header">
+                                <span>LLM Sync Rate</span>
+                                <span id="llm-percent" class="pulse-purple">100%</span>
+                            </div>
+                            <div class="meter-outer">
+                                <div class="meter-inner"
+                                    style="width: 100%; background: var(--brand-accent); box-shadow: 0 0 10px var(--brand-accent);">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hud-section">
+                        <div class="section-label">Intelligence Stream</div>
+                        <div class="intelligence-log" id="hud-log">
+                            <!-- Streamed content -->
+                        </div>
+                    </div>
+
                 </div>
-            </div>
+            </aside>
 
-            <div class="hud-metrics">
-                <div class="metric">
-                    <span class="m-label">Active Drives</span>
-                    <span class="m-val" id="kpi-campaigns">0</span>
-                </div>
-                <div class="metric">
-                    <span class="m-label">Burn Rate</span>
-                    <span class="m-val text-danger" id="kpi-spend">$0</span>
-                </div>
-            </div>
-
-            <div class="hud-section-title">AI Conscious Logs</div>
-            <div class="terminal-log" id="hud-log">
-                <div class="log-entry">Booting full 3D environment...</div>
-                <div class="log-entry">Waiting for new Campaign...</div>
-            </div>
-        </aside>
-
-        <!-- Right 3D Visualizer -->
-        <main class="visualizer" style="position: relative;">
-            <!-- Three.js Canvas container -->
-            <div id="canvas-container"
-                style="width: 100%; height: 100%; position: absolute; left: 0; top: 0; z-index: 1;"></div>
-
-            <!-- 2D Overlay for Chat Bubbles tracking 3D positions -->
-            <div id="ui-overlay"
-                style="width: 100%; height: 100%; position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none;">
-                <!-- Agent labels and bubbles generated here -->
-            </div>
+            <!-- 3D Environment -->
+            <section class="view-port-3d">
+                <div id="canvas-container" style="width: 100%; height: 100%;"></div>
+                <div id="ui-overlay"></div>
+            </section>
         </main>
     </div>
 
     <!-- Modals -->
-    <div class="modal-overlay" id="createCampaignModal">
-        <div class="modal-content glass-panel">
+    <div id="campaign-modal" class="modal-shield">
+        <div class="modal-body">
             <div class="modal-header">
-                <h2>Launch Startup Campaign</h2>
-                <button class="modal-close"
-                    onclick="document.getElementById('createCampaignModal').classList.remove('active')">&times;</button>
+                <h2>Initialize AI Fleet</h2>
+                <button class="close-btn"
+                    onclick="document.getElementById('campaign-modal').classList.remove('active')">&times;</button>
             </div>
-            <form id="campaignForm">
-                <div class="form-group">
-                    <label class="form-label">Initiative Title</label>
-                    <input type="text" id="cp_name" class="form-control" placeholder="E.g., Sustainable Coffee Launch"
-                        required>
+            <form id="campaign-form">
+                <div class="form-input-group">
+                    <label>Enterprise Vector (Project Name)</label>
+                    <input type="text" id="cp_name" placeholder="Quantum Nexus Expansion" required>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Prompts / Rules</label>
-                    <textarea id="cp_guidelines" class="form-control" rows="3"
-                        placeholder="Target GenZ, rely on RAG market trends for insight." required></textarea>
+                <div class="form-input-group">
+                    <label>Autonomous Persona Guidelines</label>
+                    <textarea id="cp_guidelines" rows="4"
+                        placeholder="Aggressive market penetration, sleek aesthetic consistency..."></textarea>
                 </div>
-                <div class="grid grid-cols-2">
-                    <div class="form-group">
-                        <label class="form-label">Budget allocation ($)</label>
-                        <input type="number" id="cp_budget" class="form-control" value="2000" required>
-                    </div>
+                <div class="form-input-group">
+                    <label>Budget Allocation ($)</label>
+                    <input type="number" id="cp_budget" value="1200">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Assign to Company Workers</button>
+                <button type="submit" class="primary-btn" style="width: 100%">Initialize Deployment</button>
             </form>
         </div>
     </div>
 
-    <!-- Company Drive Modal (To see actual Agent Outputs!) -->
-    <div class="modal-overlay" id="driveModal">
-        <div class="modal-content glass-panel" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+    <!-- Drive Modal -->
+    <div id="drive-modal" class="modal-shield">
+        <div class="modal-body" style="max-width: 900px;">
             <div class="modal-header">
-                <h2>📂 Company Data Drive (AI Assets)</h2>
-                <button class="modal-close"
-                    onclick="document.getElementById('driveModal').classList.remove('active')">&times;</button>
+                <h2>Corporate Intelligence Drive</h2>
+                <button class="close-btn"
+                    onclick="document.getElementById('drive-modal').classList.remove('active')">&times;</button>
             </div>
-            <div id="drive-contents">
-                <p class="text-muted">Loading campaign outputs...</p>
+            <div id="drive-contents" style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+                <!-- Drive data -->
             </div>
         </div>
     </div>
 
-    <!-- About Architecture Modal -->
-    <div class="modal-overlay" id="aboutModal">
-        <div class="modal-content glass-panel" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>🧠 AgencyOS Architecture</h2>
-                <button class="modal-close"
-                    onclick="document.getElementById('aboutModal').classList.remove('active')">&times;</button>
-            </div>
-            <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
-                <p><strong>3D Visual Engine:</strong> Everything you see in the map is rendered natively in WebGL using
-                    Three.js. As Python emits AI decision events, GSAP translates those into walk/type animations.</p>
-                <p><strong>Multi-Agent Workflow:</strong> When you start a campaign, a local Python Orchestrator manages
-                    the flow. The <strong>Strategist</strong> queries the <strong>Local RAG Engine</strong> for market
-                    trends, then assigns tasks to specialists like the Content Writer or SEO Agent.</p>
-                <p><strong>Governance & Approvals:</strong> Tasks don't just finish. The <strong>Risk Agent</strong> and
-                    <strong>QA Approver</strong> intercept the raw text generated by the Local LLMs (TinyLlama/Qwen). If
-                    they detect brand risks, they reject the task and send it back for Revision.</p>
-                <p><strong>Data Persistency:</strong> Every token generated, copy written, and dollar logged is stored
-                    in a SQLite database and retrievable via the Company Drive.</p>
-            </div>
-        </div>
+    <div id="toast-container"
+        style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
     </div>
 
     <script src="/static/js/api.js"></script>
