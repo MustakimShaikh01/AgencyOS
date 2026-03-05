@@ -67,4 +67,13 @@ class KnowledgeStore:
     def get_all_by_type(self, entry_type: str) -> List[Dict[str, Any]]:
         return [e for e in self.data["entries"] if e["type"] == entry_type]
 
+    def delete_entry(self, entry_id: int) -> bool:
+        """Deletes an entry from the knowledge store."""
+        original_count = len(self.data["entries"])
+        self.data["entries"] = [e for e in self.data["entries"] if e["id"] != entry_id]
+        if len(self.data["entries"]) < original_count:
+            self._save()
+            return True
+        return False
+
 knowledge_store = KnowledgeStore()

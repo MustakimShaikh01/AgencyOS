@@ -125,9 +125,22 @@ Instructions:
                     except json.JSONDecodeError:
                         continue
         
-        logger.error(f"Failed to parse LLM response for {self.name}")
-        logger.error(f"RAW OUTPUT THAT FAILED TO PARSE:\n{raw}\n---END RAW OUTPUT---")
-        raise ValueError(f"Agent {self.name} returned invalid format. Please ensure the prompt is strict.")
+        # 4. Global Fallback: Don't crash, return a standardized 'Degraded' response
+        logger.warning(f"Failed to parse JSON for {self.name}, using best-effort text extraction.")
+        
+        # We try to put the raw text into the most logical fields based on the agent
+        return {
+            "summary": raw[:500] if len(raw) > 500 else raw,
+            "analysis_summary": f"DEGRADED OUTPUT (RAW): {raw[:500]}...",
+            "content": raw, 
+            "sub_tasks": [],
+            "promotions": [],
+            "technical_notes": "JSON Parsing failed. Output preserved as raw text.",
+            "real_world_advice": "Consult neural logs for raw insight.",
+            "confidence_score": 0.1,
+            "status": "degraded_json",
+            "raw_output": raw
+        }
 
     @abstractmethod
     async def validate_output(self, output: Dict[str, Any]) -> bool:

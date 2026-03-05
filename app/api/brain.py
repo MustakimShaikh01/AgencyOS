@@ -26,3 +26,9 @@ async def get_brain_stats():
         "drafts_count": len([e for e in entries if e["type"] == "approved_content"]),
         "last_updated": knowledge_store.data.get("last_updated")
     }
+
+@router.delete("/entries/{entry_id}")
+async def delete_brain_entry(entry_id: int):
+    """Delete an entry from the knowledge store."""
+    success = knowledge_store.delete_entry(entry_id)
+    return {"status": "success" if success else "failed"}

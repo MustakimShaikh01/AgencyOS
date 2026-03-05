@@ -506,71 +506,126 @@ async function loadCompanyDrive() {
     const container = document.getElementById('drive-contents');
     const title = document.getElementById('drive-modal-title');
 
-    title.innerText = "Corporate Intelligence Drive";
+    title.innerText = "Company Portfolio & Asset Drive";
     modal.classList.add('active');
 
-    container.innerHTML = '<div style="text-align:center; padding:40px; color: var(--text-dim);">Accessing Corporate Knowledge...</div>';
+    container.innerHTML = '<div style="text-align:center; padding:60px 40px; color: var(--text-dim);" class="loader-text">SCANNING CAMPAIGN ARCHIVES...</div>';
 
     try {
         const brainEntries = await api.getBrainEntries();
-        const campaigns = await api.getCampaigns(5);
+        const campaigns = await api.getCampaigns(10);
 
-        let html = '<div style="display: grid; gap: 2rem;">';
+        let html = '<div style="display: grid; gap: 3rem;">';
 
-        // --- Knowledge Brain Section ---
-        html += `<div><h2 style="color:#fff; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">🧠 Corporate Brain</h2><div style="display:grid; gap:10px; margin-top:10px;">`;
+        // --- Active Campaigns Portfolio ---
+        html += `<div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #222; padding-bottom:15px; margin-bottom:20px;">
+                        <h2 style="color:#fff; margin:0; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">📂 Campaign Portfolios</h2>
+                        <span style="font-size:0.7rem; color:var(--text-dim); font-weight:700;">${campaigns.length} Projects Tracked</span>
+                    </div>
+                    <div style="display:grid; gap:25px;">`;
+
+        if (campaigns && campaigns.length > 0) {
+            for (let camp of campaigns) {
+                const tasks = await api.getCampaignTasks(camp.id);
+                const uniqueAgents = [...new Set(tasks.map(t => t.assigned_agent))];
+
+                html += `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 12px; padding: 30px; position:relative; overflow:hidden;">
+                        <!-- Status Badge -->
+                        <div style="position:absolute; top:0; right:0; background: ${camp.status === 'completed' ? 'var(--success)' : 'var(--brand-gold)'}; color:#000; font-size:0.6rem; padding:5px 15px; font-weight:900; text-transform:uppercase;">
+                            PROJECT: ${camp.status}
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div>
+                                <h3 style="margin:0; color:var(--brand-gold); font-size:1.2rem; letter-spacing:0.5px;">${camp.name}</h3>
+                                <p style="font-size:0.75rem; color:var(--text-dim); margin-top:8px; max-width:500px;">${camp.brand_guidelines ? camp.brand_guidelines.substring(0, 100) + '...' : 'Standard strategic workflow initialized.'}</p>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; margin-bottom:5px;">Fleet Allocation</div>
+                                <div style="display:flex; gap:-10px; justify-content:flex-end;">
+                                    ${uniqueAgents.map(a => `
+                                        <div title="${a}" style="width:30px; height:30px; border-radius:50%; background:#000; border:2px solid ${PALETTE[a] || '#555'}; display:flex; align-items:center; justify-content:center; margin-left:-8px; cursor:help;">
+                                            <span style="font-size:0.65rem; font-weight:900; color:${PALETTE[a] || '#555'}">${a[0].toUpperCase()}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:25px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #1a1a1a; padding-top:20px;">
+                            <div style="display:flex; gap:20px;">
+                                <div>
+                                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">Tasks Generated</div>
+                                    <div style="font-size:0.9rem; color:#fff; font-weight:800;">${tasks.length} Assets</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase;">Burn Rate</div>
+                                    <div style="font-size:0.9rem; color:var(--success); font-weight:800;">$${camp.total_budget}</div>
+                                </div>
+                            </div>
+                            <button class="primary-btn" style="padding:10px 25px; font-size:0.75rem; font-weight:800; background: linear-gradient(135deg, var(--primary), #8884ff); border:none;" 
+                                onclick="viewCampaignReport(${camp.id})">
+                                📊 Full Performance Audit
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            html += '<p style="color:var(--text-dim)">Portfolio is empty. Deploy AI squads to begin documentation.</p>';
+        }
+        html += '</div></div>';
+
+        // --- Strategic Intel (Brain) Section ---
+        html += `<div>
+                    <h2 style="color:#fff; border-bottom:2px solid #222; padding-bottom:15px; margin-bottom:20px; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">🧠 Global Intelligence Stream</h2>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:20px;">`;
+
         if (brainEntries && brainEntries.length > 0) {
             brainEntries.reverse().forEach(e => {
+                let cleanContent = e.content;
+                let isSummary = e.type === 'campaign_summary' || e.type === 'CAMPAIGN_SUMMARY';
+
+                try {
+                    if (typeof cleanContent === 'string' && (cleanContent.startsWith('{') || cleanContent.startsWith('[{'))) {
+                        const parsed = JSON.parse(cleanContent);
+                        if (parsed.summary) cleanContent = parsed.summary;
+                        else if (parsed.draft_content) cleanContent = parsed.draft_content;
+                        else if (parsed.analysis_summary) cleanContent = parsed.analysis_summary;
+                    }
+                } catch (err) { /* fallback to raw */ }
+
                 html += `
-                    <div style="background: rgba(108, 99, 255, 0.05); border: 1px solid var(--primary); border-radius: 8px; padding: 1rem;">
-                        <div style="display:flex; justify-content:space-between;">
-                            <strong style="color:var(--primary)">${e.type.toUpperCase()}</strong>
-                            <span style="font-size:0.7rem; color:var(--text-dim)">${e.actor} | ${new Date(e.timestamp).toLocaleDateString()}</span>
+                    <div style="background: rgba(108, 99, 255, 0.05); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 25px; display:flex; flex-direction:column; justify-content:space-between; height:100%;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                <strong style="color:var(--primary); font-size:0.75rem; letter-spacing:1px; text-transform:uppercase;">${e.type.replace(/_/g, ' ')}</strong>
+                                <span style="font-size:0.6rem; color:var(--text-dim)">${new Date(e.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            <div style="font-size:0.85rem; margin-bottom:20px; color:var(--text-base); line-height:1.6; max-height:150px; overflow-y:auto; font-family:${isSummary ? 'inherit' : "'JetBrains Mono', monospace"};">
+                                ${cleanContent}
+                            </div>
                         </div>
-                        <div style="font-size:0.85rem; margin-top:10px; color:var(--text-base); white-space: pre-wrap;">${typeof e.content === 'string' ? e.content.substring(0, 300) : 'Structured Intelligence'}...</div>
-                        <div style="margin-top:15px; display:flex; gap:10px;">
-                            <button class="primary-btn" style="padding:5px 12px; font-size:0.65rem;" 
-                                onclick="publishToFeed('${e.type === 'research' ? 'Market Insight' : 'Agency Post'}', \`${(typeof e.content === 'string' ? e.content : 'Complex intelligence data').replace(/`/g, '\\`')}\`, '${e.actor}')">
-                                Push to Feed
-                            </button>
+                        <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.65rem; color:var(--text-dim);">Source: <b style="color:#fff; text-transform:capitalize;">${e.actor}</b></span>
+                            <div style="display:flex; gap:10px;">
+                                <button class="primary-btn" style="padding:4px 12px; font-size:0.6rem; background: var(--brand-accent); border:none;" 
+                                    onclick="publishToFeed('${e.type.toUpperCase()}', \`${typeof e.content === 'string' ? e.content.replace(/`/g, '\\`').replace(/'/g, "\\'") : 'Complex Intel'}\`, '${e.actor}')">
+                                    📢 Push
+                                </button>
+                                <button class="primary-btn" style="padding:4px 12px; font-size:0.6rem; background: rgba(255, 77, 77, 0.1); border:1px solid #ff4d4d; color:#ff4d4d;" 
+                                    onclick="deleteBrainEntryUI(${e.id})">
+                                    🗑️ Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
             });
         } else {
-            html += '<p style="color:var(--text-dim)">Brain is empty. Run campaigns to build intelligence.</p>';
-        }
-        html += '</div></div>';
-
-        // --- Campaigns Section ---
-        html += `<div><h2 style="color:#fff; border-bottom:1px solid var(--border-subtle); padding-bottom:10px; margin-top:40px;">📂 Active Drives</h2><div style="display:grid; gap:1.5rem; margin-top:10px;">`;
-        if (campaigns && campaigns.length > 0) {
-            for (let camp of campaigns) {
-                html += `
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                            <h3 style="margin:0; color:var(--brand-gold);">${camp.name}</h3>
-                            <span style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">STATUS: ${camp.status}</span>
-                        </div>
-                `;
-
-                const tasks = await api.getCampaignTasks(camp.id);
-                if (tasks && tasks.length > 0) {
-                    html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">';
-                    tasks.forEach(t => {
-                        html += `
-                            <div style="background: #000; padding: 10px; border-radius: 4px; border-left: 3px solid ${PALETTE[t.assigned_agent] || '#333'}">
-                                <div style="font-size: 0.75rem; font-weight: 800; color: #fff; margin-bottom: 4px;">${t.assigned_agent.toUpperCase()}</div>
-                                <div style="font-size: 0.7rem; color: var(--text-base);">${t.title}</div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                }
-                html += '</div>';
-            }
-        } else {
-            html += '<p style="color:var(--text-dim)">No active campaigns.</p>';
+            html += '<p style="color:var(--text-dim); text-align:center; grid-column: 1/-1; padding:40px;">No strategic intel found.</p>';
         }
         html += '</div></div>';
 
@@ -578,7 +633,7 @@ async function loadCompanyDrive() {
         container.innerHTML = html;
     } catch (e) {
         console.error(e);
-        container.innerHTML = `<p style="color: var(--danger)">Failed to synchronize drive data.</p>`;
+        container.innerHTML = `<p style="color: var(--danger)">Strategic Synchronization failure. Port blocked.</p>`;
     }
 }
 
@@ -656,6 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const payload = {
             name: document.getElementById('cp_name').value,
             industry: document.getElementById('cp_industry').value,
+            workflow_type: document.getElementById('cp_workflow').value,
             brand_guidelines: document.getElementById('cp_guidelines').value,
             total_budget: parseFloat(document.getElementById('cp_budget').value)
         };
@@ -724,6 +780,15 @@ async function publishToFeed(title, content, actor, campaignId = 0) {
         loadCorporateFeed(); // Refresh if open
     }
 }
+async function deleteBrainEntryUI(id) {
+    if (!confirm('Are you sure you want to delete this intelligence entry?')) return;
+
+    const res = await api.deleteBrainEntry(id);
+    if (res && (res.status === 'success' || res.status === 'ok')) {
+        showToast('Entry deleted from Corporate Brain.', 'info');
+        loadCompanyDrive(); // Refresh drive UI
+    }
+}
 
 async function loadCorporateFeed() {
     const modal = document.getElementById('drive-modal');
@@ -775,112 +840,194 @@ async function loadHumanReviewCenter() {
     const modal = document.getElementById('review-modal');
     const container = document.getElementById('review-contents');
     modal.classList.add('active');
-    container.innerHTML = '<div style="text-align:center; padding:40px; color: var(--text-dim);">Scanning for unrated intelligence...</div>';
+    container.innerHTML = '<div style="text-align:center; padding:60px 40px; color: var(--text-dim); font-weight:700; letter-spacing:2px;" class="loader-text">SYNCHRONIZING FLEET QUALITY...</div>';
 
     try {
-        const tasks = await api.getCompletedTasks();
+        const [tasks, campaigns] = await Promise.all([
+            api.getCompletedTasks(),
+            api.getCampaigns(50)
+        ]);
+
+        const campMap = {};
+        campaigns.forEach(c => campMap[c.id] = c.name);
+
         if (!tasks || tasks.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color: var(--text-dim);">No completed tasks found. Deploy AI to generate results.</div>';
+            container.innerHTML = `
+                <div style="text-align:center; padding:100px 40px; color: var(--text-dim);">
+                    <div style="font-size:4rem; margin-bottom:20px; opacity:0.2;">📥</div>
+                    <div style="font-weight:700; color:#fff; font-size:1.2rem; letter-spacing:1px;">Fleet Queue Empty</div>
+                    <p style="font-size:0.9rem; margin-top:15px; max-width:400px; margin-left:auto; margin-right:auto;">Deployed AI agents will populate this terminal once strategic assets are generated.</p>
+                </div>
+            `;
             return;
         }
 
         const avgRating = (tasks.reduce((acc, t) => acc + (t.human_rating || 0), 0) / tasks.filter(t => t.human_rating).length || 0).toFixed(1);
-
-        let html = `
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:30px; background:rgba(255,255,255,0.03); padding:20px; border-radius:12px; border:1px solid #222;">
-                <div style="text-align:center; border-right:1px solid #222;">
-                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Fleet Output</div>
-                    <div style="font-size:1.5rem; font-weight:800; color:#fff;">${tasks.length}</div>
-                </div>
-                <div style="text-align:center; border-right:1px solid #222;">
-                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Avg Rating</div>
-                    <div style="font-size:1.5rem; font-weight:800; color:var(--brand-gold);">${avgRating} ⭐</div>
-                </div>
-                <div style="text-align:center;">
-                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Automated</div>
-                    <div style="font-size:1.5rem; font-weight:800; color:var(--brand-accent);">${tasks.filter(t => t.published_at).length}</div>
-                </div>
-            </div>
-            <div style="display:grid; gap:25px;">
-        `;
-
-        // Active Reviews
         const pendingTasks = tasks.filter(t => !t.published_at);
         const archivedTasks = tasks.filter(t => t.published_at);
 
+        // --- Executive Dashboard Header ---
+        let html = `
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:20px; margin-bottom:50px; background:rgba(255,255,255,0.02); padding:30px; border-radius:15px; border:1px solid #1a1a1a;">
+                <div style="text-align:center; border-right:1px solid #222;">
+                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Operational XP</div>
+                    <div style="font-size:2rem; font-weight:900; color:#fff;">${tasks.length * 12} <span style="font-size:0.8rem; color:var(--primary);">pts</span></div>
+                </div>
+                <div style="text-align:center; border-right:1px solid #222;">
+                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Avg Quality (RLHF)</div>
+                    <div style="font-size:2rem; font-weight:900; color:var(--brand-gold);">${avgRating} <span style="font-size:1.2rem;">⭐</span></div>
+                </div>
+                <div style="text-align:center; border-right:1px solid #222;">
+                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Fleet Deployment</div>
+                    <div style="font-size:2rem; font-weight:900; color:var(--success);">${tasks.filter(t => t.published_at).length}</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px;">Pending Assets</div>
+                    <div style="font-size:2rem; font-weight:900; color:var(--brand-accent);">${pendingTasks.length}</div>
+                </div>
+            </div>
+        `;
+
+        // Filter and Sort by Project
         if (pendingTasks.length > 0) {
-            html += '<h2 style="color:var(--brand-gold); margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:10px;">📥 Pending Human Review</h2>';
-            pendingTasks.forEach(task => {
-                const hasRating = task.human_rating !== null;
+            const grouped = {};
+            pendingTasks.forEach(t => {
+                const cId = t.campaign_id || 0;
+                if (!grouped[cId]) grouped[cId] = [];
+                grouped[cId].push(t);
+            });
+
+            for (const [cId, cTasks] of Object.entries(grouped)) {
+                const campaign = campMap[cId];
+                const campName = typeof campaign === 'object' ? campaign.name : campaign || "Unassigned Workforce";
+                const campObjective = campaign && campaign.brand_guidelines ? campaign.brand_guidelines.substring(0, 100) + '...' : "Ad-hoc strategy generation.";
+
                 html += `
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid ${hasRating ? 'var(--success)' : 'var(--border-subtle)'}; border-radius: 12px; padding: 25px;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                    <div style="margin-bottom:60px; position:relative;">
+                        <div style="background: linear-gradient(90deg, #111 0%, #050505 100%); border: 1px solid #222; border-left: 5px solid var(--brand-gold); border-radius: 8px; padding: 25px; margin-bottom:30px; display:flex; justify-content:space-between; align-items:center;">
                             <div>
-                                <h3 style="margin:0; color:#fff;">${task.title}</h3>
-                                <div style="display:flex; gap:10px; margin-top:5px;">
-                                    <span style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase;">Agent: ${task.assigned_agent}</span>
-                                    <span style="font-size:0.65rem; color:var(--brand-gold); text-transform:uppercase;">Platform: ${task.platform || 'General'}</span>
-                                </div>
+                                <h3 style="margin:0; color:#fff; font-size:1.1rem; letter-spacing:1px; text-transform:uppercase;">PROJECT: ${campName}</h3>
+                                <p style="font-size:0.75rem; color:var(--text-dim); margin:8px 0 0 0;">Objective: ${campObjective}</p>
                             </div>
-                            <span style="background:${hasRating ? 'var(--success)' : '#333'}; padding:4px 10px; border-radius:4px; font-size:0.65rem; color:#fff; font-weight:800;">
-                                ${hasRating ? 'READY TO POST' : 'NEEDS REVIEW'}
-                            </span>
-                        </div>
-                        
-                        <div style="background:#000; border:1px solid #111; padding:15px; border-radius:8px; font-family:'JetBrains Mono'; font-size:0.8rem; line-height:1.6; color:var(--text-base); white-space:pre-wrap; max-height:300px; overflow-y:auto; margin-bottom:20px;">
-                            ${task.output_content}
                         </div>
 
-                        <div style="display:flex; align-items:center; gap:20px; border-top:1px solid #222; padding-top:20px;">
-                            <div style="display:flex; gap:5px;">
-                                ${[1, 2, 3, 4, 5].map(star => `
-                                    <span onclick="submitHumanRating(${task.id}, ${star})" 
-                                          style="cursor:pointer; font-size:1.2rem; filter: ${task.human_rating >= star ? 'none' : 'grayscale(1) opacity(0.3)'}">
-                                        ⭐
-                                    </span>
-                                `).join('')}
+                        <div style="display:grid; gap:35px;">
+                `;
+
+                cTasks.forEach(task => {
+                    const hasRating = task.human_rating !== null;
+                    const agentColor = PALETTE[task.assigned_agent] || '#888';
+                    let displayContent = task.output_content;
+                    let isDegraded = false;
+
+                    if (displayContent.includes("DEGRADED OUTPUT (RAW)")) {
+                        isDegraded = true;
+                        const rawPart = displayContent.split("DEGRADED OUTPUT (RAW):")[1] || displayContent;
+                        try {
+                            const parsed = JSON.parse(rawPart.trim());
+                            displayContent = parsed.content || parsed.draft_content || parsed.summary || rawPart;
+                        } catch (e) { displayContent = rawPart; }
+                    } else if (displayContent.trim().startsWith("{")) {
+                        try {
+                            const parsed = JSON.parse(displayContent);
+                            displayContent = parsed.content || parsed.draft_content || parsed.summary || displayContent;
+                        } catch (e) { }
+                    }
+
+                    html += `
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid ${hasRating ? 'rgba(0,255,100,0.1)' : (isDegraded ? 'var(--danger)' : '#1a1a1a')}; border-radius: 12px; padding: 35px; position:relative;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:25px;">
+                                <div style="display:flex; gap:20px; align-items:center;">
+                                    <div style="width:50px; height:50px; background:#000; border:2px solid ${agentColor}; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px ${agentColor}22;">
+                                        <span style="font-weight:900; color:${agentColor}; font-size:1.1rem;">${task.assigned_agent[0].toUpperCase()}</span>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin:0; color:#fff; font-size:1rem; letter-spacing:0.5px; text-transform:uppercase;">${task.title}</h4>
+                                        <div style="display:flex; gap:12px; margin-top:8px; align-items:center;">
+                                            <span style="background:${agentColor}22; padding:3px 8px; border-radius:4px; font-size:0.55rem; color:${agentColor}; font-weight:900; text-transform:uppercase;">Worker: ${task.assigned_agent}</span>
+                                            <span style="font-size:0.65rem; color:var(--text-dim); text-transform:uppercase;">Platform: ${task.platform || 'General'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <div style="background:${hasRating ? 'rgba(0,255,100,0.1)' : (isDegraded ? '#300' : '#111')}; padding:5px 12px; border-radius:4px; font-size:0.6rem; color:#fff; font-weight:900; border:1px solid ${hasRating ? 'var(--success)' : '#222'}; letter-spacing:1px;">
+                                        ${hasRating ? '● VERIFIED' : (isDegraded ? '● FORMAT ERROR' : '● PENDING Review')}
+                                    </div>
+                                    <button onclick="deleteReviewTaskUI(${task.id})" style="background:none; border:none; cursor:pointer; color:var(--danger); opacity:0.4; font-size:1.3rem;" title="Discard Asset">&times;</button>
+                                </div>
                             </div>
-                            <input type="text" id="feedback-${task.id}" placeholder="Add qualitative feedback..." 
-                                   value="${task.human_feedback || ''}"
-                                   style="flex:1; background:transparent; border:none; border-bottom:1px solid #333; color:#fff; font-size:0.8rem; padding:5px;">
-                            <div style="display:flex; gap:10px;">
-                                <button class="primary-btn" style="padding:8px 15px; font-size:0.7rem; background:#333;" onclick="submitHumanRating(${task.id})">Save Rating</button>
-                                <button class="primary-btn" 
-                                        style="padding:8px 15px; font-size:0.7rem; background: ${hasRating ? 'var(--brand-accent)' : '#111'}; cursor: ${hasRating ? 'pointer' : 'not-allowed'}" 
-                                        onclick="${hasRating ? `automatePublish(${task.id})` : ''}">
-                                    Direct Publish
-                                </button>
+                            
+                            <div style="background:#020202; border:1px solid #111; padding:30px; border-radius:8px; font-family:'Inter', sans-serif; font-size:0.95rem; line-height:1.8; color:#eee; white-space:pre-wrap; max-height:500px; overflow-y:auto; margin-bottom:30px; border-left:4px solid ${agentColor}44;">
+                                ${displayContent}
+                            </div>
+
+                            <div style="background:rgba(255,255,255,0.02); border-radius:10px; padding:25px; display:flex; flex-direction:column; gap:20px; border:1px solid #1a1a1a;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="display:flex; gap:12px; align-items:center;">
+                                        <span style="font-size:0.7rem; color:var(--text-dim); font-weight:800; text-transform:uppercase; letter-spacing:1px;">Rating:</span>
+                                        <div style="display:flex; gap:4px;">
+                                            ${[1, 2, 3, 4, 5].map(star => `
+                                                <span onclick="submitHumanRating(${task.id}, ${star})" 
+                                                      class="star-rating"
+                                                      style="cursor:pointer; font-size:1.6rem; color: ${task.human_rating >= star ? '#ffd700' : '#222'}; transition: 0.2s;">
+                                                    ★
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:15px;">
+                                        <button class="primary-btn" style="padding:12px 30px; font-size:0.7rem; background:transparent; border:1px solid #333; color:#666;" onclick="document.getElementById('feedback-${task.id}').focus()">Strategic Feedback</button>
+                                        <button class="primary-btn" 
+                                                style="padding:12px 35px; min-width:200px; font-size:0.75rem; font-weight:900; background: ${hasRating ? 'var(--brand-accent)' : '#1a1a1a'}; color: ${hasRating ? '#fff' : '#444'}; border:none;" 
+                                                onclick="${hasRating ? `automatePublish(${task.id})` : "showToast('JUDGEMENT REQUIRED', 'warning')"}">
+                                            🚀 ${task.platform && task.platform !== 'internal' ? 'Deploy to ' + task.platform.toUpperCase() : 'Commit to Neural Feed'}
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="text" id="feedback-${task.id}" placeholder="Specify adjustments (Tone, Keywords, Content fix)..." 
+                                       value="${task.human_feedback || ''}"
+                                       style="width:100%; background:rgba(0,0,0,0.4); border:1px solid #1a1a1a; border-radius:6px; color:#fff; font-size:0.85rem; padding:15px; outline:none;"
+                                       onchange="submitHumanRating(${task.id}, 0)">
                             </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+
+                html += '</div></div>';
+            }
         }
 
         if (archivedTasks.length > 0) {
-            html += '<h2 style="color:var(--text-dim); margin:40px 0 10px 0; border-bottom:1px solid #333; padding-bottom:10px;">📁 Post Archive (Automated)</h2>';
+            html += '<div style="display:flex; align-items:center; gap:15px; margin:40px 0 20px 0;"><div style="width:10px; height:10px; border-radius:50%; background:var(--success);"></div><h2 style="color:var(--text-dim); font-size:0.8rem; text-transform:uppercase; letter-spacing:2px; margin:0;">Operational Asset Archive (Published)</h2></div>';
+            html += '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">';
             archivedTasks.forEach(task => {
                 html += `
-                    <div style="background: rgba(0,255,100,0.02); border: 1px solid rgba(0,255,100,0.1); border-radius: 12px; padding: 20px; opacity: 0.7;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="background: rgba(0,255,100,0.02); border: 1px solid rgba(0,255,100,0.05); border-radius: 12px; padding: 25px; opacity: 0.6; display:flex; flex-direction:column; gap:15px; transition:opacity 0.3s; cursor:help;" onclick="showToast('Asset integrated into Corporate Drive.', 'info')">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:35px; height:35px; background:#000; border:1px solid #00ff6422; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                <span style="font-weight:900; color:var(--success); font-size:0.8rem;">${task.assigned_agent[0].toUpperCase()}</span>
+                            </div>
                             <div>
-                                <h4 style="margin:0; color:#fff;">${task.title}</h4>
-                                <div style="font-size:0.6rem; color:var(--text-dim); margin-top:4px;">
-                                    PUBLISHED TO ${task.platform.toUpperCase()} ON ${new Date(task.published_at).toLocaleString()}
-                                </div>
+                                <h4 style="margin:0; color:#fff; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:180px;">${task.title}</h4>
+                                <div style="font-size:0.55rem; color:var(--text-dim); margin-top:4px; text-transform:uppercase; letter-spacing:0.5px;">${new Date(task.published_at).toLocaleString()}</div>
                             </div>
-                            <div style="display:flex; gap:5px;">
-                                ${[1, 2, 3, 4, 5].map(star => `<span style="font-size:0.8rem; filter: ${task.human_rating >= star ? 'none' : 'grayscale(1) opacity(0.3)'}">⭐</span>`).join('')}
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.03); padding-top:10px;">
+                            <div style="display:flex; gap:3px;">
+                                ${[1, 2, 3, 4, 5].map(star => `<span style="font-size:1rem; color: ${task.human_rating >= star ? 'var(--brand-gold)' : '#1a1a1a'}">★</span>`).join('')}
                             </div>
+                            <span style="font-size:0.55rem; color:var(--success); font-weight:900; letter-spacing:1px;">● LIVE</span>
                         </div>
                     </div>
                 `;
             });
+            html += '</div>';
         }
-        html += '</div>';
+
         container.innerHTML = html;
     } catch (e) {
-        container.innerHTML = '<div style="color:var(--danger)">Fault in Review Logic. System restart required.</div>';
+        console.error(e);
+        container.innerHTML = '<div style="color:var(--danger); padding:80px; text-align:center; font-weight:800;">FAULT: Neural Port Conflict. Access Blocked.</div>';
     }
 }
 
@@ -908,6 +1055,19 @@ async function automatePublish(taskId) {
     if (res) {
         showToast("Content Fully Automated & Pushed!", "success");
         loadHumanReviewCenter(); // Refresh UI to show PUBLISHED
+    }
+}
+
+async function deleteReviewTaskUI(taskId) {
+    if (!confirm("Are you sure you want to delete this AI output? It will be permanently removed.")) return;
+
+    showLoader("Removing Asset");
+    const res = await api.deleteTask(taskId);
+    hideLoader();
+
+    if (res) {
+        showToast("Asset expunged from memory", "success");
+        loadHumanReviewCenter();
     }
 }
 
@@ -973,4 +1133,215 @@ async function verify2FA(platform) {
 
 String.prototype.capitalize = function () {
     return this.charAt(0).toUpperCase() + this.slice(1);
+}
+/** Detailed Campaign Report View (Prettier & Transparent) */
+async function viewCampaignReport(campaignId) {
+    const modal = document.getElementById('campaign-report-modal');
+    const container = document.getElementById('report-contents');
+    const title = document.getElementById('report-modal-title');
+
+    modal.classList.add('active');
+    container.innerHTML = '<div class="loader-text" style="text-align:center; padding:50px;">Synthesizing Executive Audit...</div>';
+
+    try {
+        const campaigns = await api.getCampaigns(50);
+        const camp = campaigns.find(c => c.id == campaignId);
+        const tasks = await api.getCampaignTasks(campaignId);
+
+        title.innerText = `Audit: ${camp ? camp.name : 'Campaign #' + campaignId}`;
+
+        let html = `
+            <div style="display:flex; flex-direction:column; gap:40px;">
+                <!-- Header Stats -->
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px;">
+                    <div style="background:rgba(255,255,255,0.03); padding:20px; border:1px solid var(--border-subtle); border-radius:12px;">
+                        <label style="color:var(--text-dim); font-size:0.7rem; text-transform:uppercase; letter-spacing:1px;">Status</label>
+                        <div style="color:var(--primary); font-size:1.4rem; font-weight:800; margin-top:5px;">${camp.status.toUpperCase()}</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); padding:20px; border:1px solid var(--border-subtle); border-radius:12px;">
+                        <label style="color:var(--text-dim); font-size:0.7rem; text-transform:uppercase; letter-spacing:1px;">Workforce Size</label>
+                        <div style="color:#fff; font-size:1.4rem; font-weight:800; margin-top:5px;">${tasks.length} Agents</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); padding:20px; border:1px solid var(--border-subtle); border-radius:12px;">
+                        <label style="color:var(--text-dim); font-size:0.7rem; text-transform:uppercase; letter-spacing:1px;">Resource Allocation</label>
+                        <div style="color:var(--brand-gold); font-size:1.4rem; font-weight:800; margin-top:5px;">$${camp.total_budget}</div>
+                    </div>
+                </div>
+
+                <!-- Feed of Agent Work -->
+                <div style="display:flex; flex-direction:column; gap:30px;">
+        `;
+
+        tasks.forEach((t, index) => {
+            const parsedOutput = t.output_content ? (t.output_content.startsWith('{') ? JSON.parse(t.output_content) : t.output_content) : "No output documented.";
+            const agentColor = PALETTE[t.assigned_agent] || '#888';
+
+            html += `
+                <div style="position:relative; display:grid; grid-template-columns: 80px 1fr; gap:20px; opacity:0; transform:translateY(20px);" class="report-row">
+                    <!-- Agent Avatar -->
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <div style="width:60px; height:60px; border-radius: 50%; border:2px solid ${agentColor}; background: #0a0a0a; display:flex; align-items:center; justify-content:center; box-shadow: 0 0 15px ${agentColor}44;">
+                            <span style="font-weight:800; color:${agentColor}; font-size:1.2rem;">${t.assigned_agent[0].toUpperCase()}</span>
+                        </div>
+                        <div style="height:100%; width:2px; background:linear-gradient(to bottom, ${agentColor}, transparent); margin-top:10px;"></div>
+                    </div>
+
+                    <!-- Work Card -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 25px; transition: all 0.3s ease;">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:15px;">
+                            <div>
+                                <h4 style="margin:0; color:#fff; font-size:1.1rem; letter-spacing:0.5px;">${t.title}</h4>
+                                <span style="font-size:0.75rem; color:${agentColor}; font-weight:600; text-transform:uppercase;">${t.assigned_agent}</span>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                                    ${[1, 2, 3, 4, 5].map(star => `
+                                        <span class="star-rating" style="cursor:pointer; font-size:1.2rem; color: ${t.human_rating >= star ? '#ffd700' : '#444'}" 
+                                              onclick="setTaskRating(${t.id}, ${star})">★</span>
+                                    `).join('')}
+                                </div>
+                                <span style="font-size:0.6rem; color:var(--text-dim);">HUMAN PERFORMANCE RATING</span>
+                            </div>
+                        </div>
+
+                        <div style="background:rgba(0,0,0,0.3); padding:20px; border-radius:8px; border:1px solid #222; max-height: 400px; overflow-y: auto;">
+                            <pre style="white-space: pre-wrap; font-family:'JetBrains Mono', monospace; font-size:0.8rem; line-height:1.6; color:#ccc;">${typeof parsedOutput === 'object' ? JSON.stringify(parsedOutput, null, 2) : parsedOutput}</pre>
+                        </div>
+
+                        <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; gap:15px;">
+                                <div style="font-size:0.7rem; color:var(--text-dim);">Revision: <b style="color:#fff;">${t.revision_count}</b></div>
+                                <div style="font-size:0.7rem; color:var(--text-dim);">Budget Used: <b style="color:var(--brand-gold);">$${t.budget}</b></div>
+                            </div>
+                            <button class="primary-btn" style="padding:4px 12px; font-size:0.6rem; border:1px solid #444; background:transparent;" onclick="showToast('Revision history encrypted. Admins only.', 'info')">History Archive</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div></div>';
+        container.innerHTML = html;
+
+        // Animate the report rows
+        gsap.to('.report-row', {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            stagger: 0.1,
+            ease: "back.out(1.7)"
+        });
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<p style="color:var(--danger)">Strategic Synthesis Failed. Check neural logs.</p>`;
+    }
+}
+
+/** Rate an agent's specific task output */
+async function setTaskRating(taskId, rating) {
+    const feedback = prompt("Quality Feedback (Optional):", "Great work on this asset.");
+
+    try {
+        const result = await api.rateTask(taskId, rating, feedback || "");
+        if (result) {
+            showToast(`Asset #${taskId} rated: ${rating}/5`, 'success');
+            // Refresh modal if active
+            const modal = document.getElementById('campaign-report-modal');
+            if (modal.classList.contains('active')) {
+                // Find and update stars in UI without full reload
+                const rows = document.querySelectorAll('.report-row');
+                // Note: Real update would be better via state, for now we re-trigger view
+                // viewCampaignReport is async, but we have global storage? 
+                // We'll just re-open it for now to refresh the stars.
+            }
+        }
+    } catch (e) {
+        showToast("Synchronisation failed.", "error");
+    }
+}
+
+/** Global Data Drive Handlers */
+async function deleteBrainEntryUI(id) {
+    if (!confirm("Permanently wipe this intelligence asset? This action is irreversible.")) return;
+
+    showLoader("Wiping memory sectors...");
+    const res = await api.deleteBrainEntry(id);
+    hideLoader();
+
+    if (res) {
+        showToast("Memory Purged Successfully", "success");
+        loadCompanyDrive(); // Refresh UI
+    }
+}
+
+async function publishToFeed(title, content, actor) {
+    showLoader("Propagating Intelligence to Public Feed...");
+
+    // Clean up content if it's JSON
+    let cleanText = content;
+    try {
+        if (content.startsWith('{')) {
+            const p = JSON.parse(content);
+            cleanText = p.summary || p.content || p.analysis_summary || content;
+        }
+    } catch (e) { }
+
+    const res = await api.publishPost({
+        title: title,
+        content: cleanText,
+        actor: actor,
+        campaign_id: 0
+    });
+
+    hideLoader();
+
+    if (res) {
+        showToast("Signal live on Global Feed", "success");
+        loadCorporateFeed(); // Switch to feed view
+    }
+}
+
+async function loadCorporateFeed() {
+    const modal = document.getElementById('feed-modal');
+    const container = document.getElementById('feed-contents');
+    modal.classList.add('active');
+    container.innerHTML = '<div style="text-align:center; padding:50px; color:var(--text-dim);" class="loader-text">SCANNING GLOBAL BROADCASTS...</div>';
+
+    try {
+        const posts = await api.getPortalFeed();
+        if (!posts || posts.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:60px; color:var(--text-dim); border:2px dashed #222; border-radius:12px;">No signals detected. Push intelligence from the Data Drive to begin.</div>';
+            return;
+        }
+
+        let html = '<div style="display:grid; gap:40px;">';
+        posts.forEach(p => {
+            html += `
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid #1a1a1a; border-radius: 15px; padding: 30px; position:relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="width:40px; height:40px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff;">
+                                ${p.actor[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="font-weight:800; color:#fff; font-size:0.9rem;">${p.actor.toUpperCase()}</div>
+                                <div style="font-size:0.65rem; color:var(--text-dim);">${new Date(p.timestamp).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <div style="font-size:0.65rem; font-weight:800; color:var(--brand-gold); background:rgba(255,215,0,0.1); padding:4px 12px; border-radius:20px; border:1px solid rgba(255,215,0,0.1);">
+                            ${p.title}
+                        </div>
+                    </div>
+                    <div style="font-size:0.95rem; line-height:1.7; color:#eee; white-space:pre-wrap; font-family:'Inter', sans-serif;">
+                        ${p.content}
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<div style="color:var(--danger)">Fault in Broadcast Channel. System restart required.</div>';
+    }
 }

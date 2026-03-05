@@ -9,6 +9,9 @@ from .ads_manager import AdsManagerAgent
 from .social_manager import SocialManagerAgent
 from .chief_intelligence_officer import ChiefIntelligenceOfficer
 from .researcher import ResearcherAgent
+from .designer import DesignerAgent
+from .developer import DeveloperAgent
+from .optimization_agent import OptimizationAgent
 
 # Registry of all available agents
 AGENT_REGISTRY = {
@@ -22,6 +25,9 @@ AGENT_REGISTRY = {
     "social_manager": SocialManagerAgent(),
     "cio": ChiefIntelligenceOfficer(),
     "researcher": ResearcherAgent(),
+    "developer": DeveloperAgent(),
+    "designer": DesignerAgent(),
+    "performance_lead": OptimizationAgent(),
 }
 
 __all__ = [
@@ -36,5 +42,8 @@ __all__ = [
     "SocialManagerAgent",
     "ChiefIntelligenceOfficer",
     "ResearcherAgent",
+    "DeveloperAgent",
+    "DesignerAgent",
+    "OptimizationAgent",
     "AGENT_REGISTRY"
 ]

@@ -6,11 +6,20 @@ from app.db.models import Base
 
 logger = logging.getLogger(__name__)
 
+from sqlalchemy import event
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=False,  # Set to True for debugging SQL queries
     connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
 )
+
+@event.listens_for(engine.sync_engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

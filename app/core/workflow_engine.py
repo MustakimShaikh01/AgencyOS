@@ -28,6 +28,13 @@ class WorkflowEngine:
             "social_manager",   # Re-purposing
             "approver",
             "finance_controller",
+        ],
+        "website_campaign": [
+            "strategist",
+            "designer",         # UI/UX Specs
+            "developer",        # Code Generation
+            "approver",         # Final QA
+            "performance_lead", # Guarantees speed and accuracy
         ]
     }
 

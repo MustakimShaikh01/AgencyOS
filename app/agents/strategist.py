@@ -23,15 +23,15 @@ Latest Market Trends (RAG Database):
 Budget: ${budget}
 
 Break this campaign into actionable sub-tasks.
-Assign each task to one of: content_writer, seo_agent, ads_manager, social_manager
+Assign each task to one of: designer, developer, content_writer, seo_agent, ads_manager, social_manager
 
 Follow this exact JSON format in your response. Do not include any other text:
 {{
-  "analysis_summary": "...",
+  "summary": "High-level overview of the plan",
   "sub_tasks": [
     {{
-      "title": "...",
-      "description": "...",
+      "title": "Task Title",
+      "description": "Task Description",
       "assigned_to": "agent_name",
       "platform": "linkedin|meta|whatsapp|internal",
       "budget": 0.0,
@@ -45,7 +45,7 @@ JSON OUTPUT: """
 
     async def validate_output(self, output: Dict[str, Any]) -> bool:
         """Validate strategist outputs."""
-        required_keys = {"analysis_summary", "sub_tasks", "confidence_score"}
+        required_keys = {"summary", "sub_tasks", "confidence_score"}
         if not required_keys.issubset(output.keys()):
             return False
         

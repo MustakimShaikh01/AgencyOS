@@ -3,7 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
 
+import logging
 from app.db.session import get_db
+
+logger = logging.getLogger(__name__)
 from app.db.models import Task, Decision
 from app.api.schemas import TaskResponse, DecisionResponse, TaskRateRequest
 
@@ -56,10 +59,15 @@ async def publish_task(task_id: int, db: AsyncSession = Depends(get_db)):
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
-    if not task.platform or task.platform == "internal":
-        raise HTTPException(status_code=400, detail="Task is internal or has no platform assigned.")
+    if not task.platform or task.platform == "internal" or task.platform == "general":
+        logger.info(f"INTERNAL ARCHIVE: Publishing task {task.id} to Neural Feed...")
+        task.published_at = datetime.utcnow()
+        task.status = "published"
+        await db.commit()
+        await db.refresh(task)
+        return task
 
-    # Check social account security (2FA)
+    # Check social account security (2FA) for external platforms
     result = await db.execute(select(SocialAccount).where(SocialAccount.platform == task.platform))
     account = result.scalar_one_or_none()
     
@@ -84,3 +92,14 @@ async def get_task_decisions(task_id: int, db: AsyncSession = Depends(get_db)):
         .order_by(Decision.timestamp.asc()) # Chronological QA flow!
     )
     return result.scalars().all()
+
+@router.delete("/{task_id}")
+async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)):
+    """Remove a task and its associated decisions from the system."""
+    task = await db.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    await db.delete(task)
+    await db.commit()
+    return {"status": "success", "message": f"Task {task_id} deleted."}

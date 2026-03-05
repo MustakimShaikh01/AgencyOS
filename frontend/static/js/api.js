@@ -81,6 +81,20 @@ class ApiService {
         return this.getJSON(url);
     }
 
+    async deleteBrainEntry(entryId) {
+        try {
+            const res = await fetch(`${this.baseUrl}/brain/entries/${entryId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+        } catch (error) {
+            console.error(`DELETE /brain/entries/${entryId} failed:`, error);
+            if (typeof showToast === 'function') showToast(`Delete Failed: ${error.message}`, 'error');
+            return null;
+        }
+    }
+
     // Portal (New)
     async publishPost(postData) {
         return this.postJSON('/portal/publish', postData);
@@ -101,6 +115,20 @@ class ApiService {
 
     async publishTask(taskId) {
         return this.postJSON(`/tasks/${taskId}/publish`, {});
+    }
+
+    async deleteTask(taskId) {
+        try {
+            const res = await fetch(`${this.baseUrl}/tasks/${taskId}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+        } catch (error) {
+            console.error(`DELETE /tasks/${taskId} failed:`, error);
+            if (typeof showToast === 'function') showToast(`Delete Failed: ${error.message}`, 'error');
+            return null;
+        }
     }
 
     async getSocialAccounts() {

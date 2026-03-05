@@ -25,6 +25,7 @@ class CampaignResponse(BaseModel):
 # Task Schemas
 class TaskResponse(BaseModel):
     id: int
+    campaign_id: int
     title: str
     description: Optional[str] = None
     assigned_agent: Optional[str]

@@ -59,14 +59,27 @@ class MultiModelExecutor:
             except Exception as e:
                 logger.error(f"Execution failed with model {current_model} for agent {agent_name}: {e}")
                 
+                # Accuracy Guide Intervention (The "One LLM handle" request)
+                # Don't seek guidance if we ARE the performance lead or if this is already an error recovery
+                if agent_name != "performance_lead" and "Seeking guidance" not in prompt:
+                    logger.info(f"Seeking performance lead's guidance for {agent_name}...")
+                    try:
+                        perf_prompt = f"Agent '{agent_name}' failed using model '{current_model}'. Error: {e}. Provide immediate corrective strategy."
+                        guidance_raw = await self.execute("performance_lead", perf_prompt)
+                        # We don't necessarily use the guidance yet, we just log it as instructions for the next fallback 
+                        logger.info(f"Performance Lead Guidance for {agent_name}: {guidance_raw.get('optimization_plan', 'Re-trying...')}")
+                    except Exception as ge:
+                        logger.debug(f"Guide failed (non-fatal): {ge}")
+
                 # Determine fallback
                 next_model = FALLBACK_MAP.get(current_model)
                 if next_model:
                     logger.warning(f"Falling back from {current_model} to {next_model}...")
                     current_model = next_model
                 else:
-                    logger.error(f"No more fallback models available for {agent_name}.")
-                    raise
+                    logger.error(f"No more fallback models available for {agent_name}. Returning degraded response.")
+                    # Return the degraded response instead of raising to keep the campaign alive
+                    return await agent.parse_response(f"EROR: All models failed for this task. Context: {e}")
 
     async def _log_usage(self, agent: str, model: str, tokens: int, duration_ms: int, task_id: int) -> None:
         """Log token costs safely and asyncly."""
