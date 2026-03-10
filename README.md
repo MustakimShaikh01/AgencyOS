@@ -127,7 +127,6 @@ agencyos/
 > All 12 overarching phases have been successfully built, tested, and integrated. Recent updates have focused on the **3D Office Environment**, adding dynamic lighting, new rooms, and improved visual fidelity.
 
 ---
-
 ## 📄 License
 
 MIT License — See [LICENSE](./LICENSE)
